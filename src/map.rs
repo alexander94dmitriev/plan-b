@@ -31,7 +31,7 @@ pub struct Map(HashMap<SystemId, SystemInfo>);
 
 impl Map {
     pub fn fetch() -> Result<Map, Error> {
-        let map_file = File::open("info.json.gz")?;
+        let map_file = File::open("eve-map.json.gz")?;
         let gunzip = gzip::Decoder::new(map_file)?;
         let map_data: Value = serde_json::from_reader(gunzip)?;
         let systems = map_data

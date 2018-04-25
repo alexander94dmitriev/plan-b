@@ -72,5 +72,5 @@ for system_id, system_data in by_system_id.items():
         sleep(1.0/30.0)
 
 info = {'systems': by_system_id, 'stargates': by_stargate_id}
-with open('info.json', 'w') as dumpfile:
+with open('eve-map.json', 'w') as dumpfile:
     json.dump(info, dumpfile)
