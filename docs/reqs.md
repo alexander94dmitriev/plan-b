@@ -15,3 +15,4 @@
 12. Provide a visual map [HD]
 13. Prioritize differentiated routes [HD]
 14. Sparsify waypoints [O]
+15. End-to-end routing time less than 10 seconds [R]
