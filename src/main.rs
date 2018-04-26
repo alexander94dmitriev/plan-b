@@ -16,6 +16,6 @@ fn main() {
     let src = (&mut args).skip(1).next().expect("no source");
     let dest = (&mut args).next().expect("no destination");
     let map = Map::fetch().expect("could not open map");
-    let path = search(map, &src, &dest).expect("no route");
+    let path = search(&map, &src, &dest).expect("no route");
     println!("{:?}", path);
 }
