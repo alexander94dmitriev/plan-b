@@ -18,17 +18,17 @@ use std::fs::File;
 use std::fmt;
 
 #[derive(Debug)]
-struct MapDataError;
+struct MapDataError(&'static str);
 
 impl Error for MapDataError {
     fn description(&self) -> &'static str {
-        "map data error"
+        self.0
     }
 }
 
 impl fmt::Display for MapDataError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description())
+        write!(f, "map data error: {}", self.description())
     }
 }
 
@@ -55,22 +55,42 @@ impl Map {
         let map_file = File::open("eve-map.json.gz")?;
         let gunzip = gzip::Decoder::new(map_file)?;
         let map_data: Value = serde_json::from_reader(gunzip)?;
-        let json_systems = map_data
-            .get("systems")
-            .ok_or_else(|| MapDataError)?
+        let json_systems = map_data["systems"]
             .as_object()
-            .ok_or_else(|| MapDataError)?;
+            .ok_or_else(|| MapDataError("no systems"))?;
+        let json_stargates = map_data["stargates"]
+            .as_object()
+            .ok_or_else(|| MapDataError("no stargates"))?;
         let mut by_system_id = HashMap::new();
         let mut by_name = HashMap::new();
         let mut systems = Vec::with_capacity(json_systems.len());
         let mut system_index = 0;
         for (system_id_str, system) in json_systems {
             let system_id = SystemId(system_id_str.parse().unwrap());
+
             let name = system["name"]
                 .as_str()
-                .ok_or_else(|| MapDataError)?
+                .ok_or_else(|| MapDataError("no system name"))?
                 .to_string();
-            let stargates = Vec::new();
+
+            let mut stargates = Vec::new();
+            let stargate_ids = system["stargates"]
+                .as_array()
+                .ok_or_else(|| MapDataError("no system stargates"))?;
+            for stargate_id in stargate_ids {
+                let stargate_id_string = stargate_id.to_string();
+                let dest_id = json_stargates[&stargate_id_string]
+                    .as_object()
+                    .ok_or_else(|| MapDataError("bad stargate id"))?
+                    .get("destination")
+                    .ok_or_else(|| MapDataError("no stargate destination"))?
+                    .get("system_id")
+                    .ok_or_else(|| MapDataError("no stargate system id"))?
+                    .as_u64()
+                    .ok_or_else(|| MapDataError("bad stargate system_id"))?;
+                stargates.push(SystemId(dest_id as usize));
+            }
+
             let system_info = SystemInfo {
                 system_id,
                 name: name.clone(),
@@ -79,6 +99,7 @@ impl Map {
             systems.push(system_info);
             by_system_id.insert(system_id, system_index);
             by_name.insert(name, system_index);
+
             system_index += 1;
         }
         Ok(Map{systems, by_system_id, by_name})

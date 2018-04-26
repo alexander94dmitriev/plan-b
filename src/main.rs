@@ -17,5 +17,8 @@ fn main() {
     let dest = (&mut args).next().expect("no destination");
     let map = Map::fetch().expect("could not open map");
     let path = search(&map, &src, &dest).expect("no route");
-    println!("{:?}", path);
+    for system_id in path {
+        let system = map.by_system_id(system_id).unwrap();
+        println!("{:?}", system);
+    }
 }
