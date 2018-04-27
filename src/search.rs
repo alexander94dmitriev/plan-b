@@ -18,10 +18,15 @@ pub fn search<'a>(
     let start = map.by_name(src)?.system_id;
     let goal = map.by_name(dest)?.system_id;
     let mut q = MinMaxHeap::new();
-    let mut closed: HashMap<SystemId, (usize, Option<SystemId>)> = HashMap::new();
+    let mut closed: HashMap<SystemId, (usize, Option<SystemId>)>
+        = HashMap::new();
     q.push((0, start, None));
     loop {
         let (dist, cur, parent) = q.pop_min()?;
+        if closed.contains_key(&cur) {
+            continue;
+        }
+        closed.insert(cur, (dist, parent));
         if cur == goal {
             let mut path = Vec::with_capacity(dist);
             path.push(cur);
@@ -34,12 +39,8 @@ pub fn search<'a>(
             path.reverse();
             return Some(path);
         }
-        closed.insert(cur, (dist, parent));
         let map_info = map.by_system_id(cur);
         for child in map_info.stargates.iter() {
-            if closed.contains_key(child) {
-                continue;
-            }
             q.push((dist + 1, *child, Some(cur)));
         }
     }
