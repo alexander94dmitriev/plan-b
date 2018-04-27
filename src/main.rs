@@ -19,6 +19,6 @@ fn main() {
     let path = search(&map, &src, &dest).expect("no route");
     for system_id in path {
         let system = map.by_system_id(system_id);
-        println!("{:?}", system);
+        println!("{}", system.name);
     }
 }

@@ -32,7 +32,7 @@ impl fmt::Display for MapDataError {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SystemId(usize);
 
 #[derive(Debug)]

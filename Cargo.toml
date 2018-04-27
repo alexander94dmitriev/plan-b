@@ -11,3 +11,4 @@ authors = ["Po Huit <eve.po.huit@gmail.com>"]
 [dependencies]
 libflate = "0.1"
 serde_json = "1.0"
+min-max-heap = "1.0"
