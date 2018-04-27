@@ -10,13 +10,11 @@ use map::*;
 
 use std::collections::HashMap;
 
-pub fn search<'a>(
+pub fn shortest_path<'a>(
     map: &'a Map,
-    src: &'a str,
-    dest: &'a str,
+    start: SystemId,
+    goal: SystemId,
     ) -> Option<Vec<SystemId>> {
-    let start = map.by_name(src)?.system_id;
-    let goal = map.by_name(dest)?.system_id;
     let mut q = MinMaxHeap::new();
     let mut closed: HashMap<SystemId, (usize, Option<SystemId>)>
         = HashMap::new();
