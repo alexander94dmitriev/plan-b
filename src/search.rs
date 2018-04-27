@@ -10,7 +10,7 @@ use map::*;
 
 use std::collections::HashMap;
 
-pub fn shortest_path<'a>(
+pub fn shortest_route<'a>(
     map: &'a Map,
     start: SystemId,
     goal: SystemId,
@@ -26,16 +26,16 @@ pub fn shortest_path<'a>(
         }
         closed.insert(cur, (dist, parent));
         if cur == goal {
-            let mut path = Vec::with_capacity(dist);
-            path.push(cur);
+            let mut route = Vec::with_capacity(dist);
+            route.push(cur);
             let mut next_stop = parent;
             while let Some(system_id) = next_stop {
-                path.push(system_id);
+                route.push(system_id);
                 let (_, parent) = closed[&system_id];
                 next_stop = parent;
             }
-            path.reverse();
-            return Some(path);
+            route.reverse();
+            return Some(route);
         }
         let map_info = map.by_system_id(cur);
         for child in map_info.stargates.iter() {

@@ -17,16 +17,27 @@ fn find_system(map: &Map, name: &str) -> SystemId {
         .system_id
 }
 
+fn find_route(map: &Map, start: &str, goal: &str) -> Vec<SystemId> {
+    let start_id = find_system(&map, start);
+    let goal_id = find_system(&map, goal);
+    shortest_route(&map, start_id, goal_id)
+        .expect(&format!("no route found from {} to {}", start, goal))
+}
+
+#[test]
+fn shortest_route_north_south() {
+    let map = Map::fetch().expect("could not open map");
+    let route = find_route(&map, "B-GC1T", "2UK4-N");
+    assert_eq!(80, route.len());
+}
+
 fn main() {
     let mut args = std::env::args();
     let start = (&mut args).skip(1).next().expect("no source");
     let goal = (&mut args).next().expect("no destination");
     let map = Map::fetch().expect("could not open map");
-    let start_id = find_system(&map, &start);
-    let goal_id = find_system(&map, &goal);
-    let path = shortest_path(&map, start_id, goal_id)
-        .expect(&format!("no route found from {} to {}", start, goal));
-    for system_id in path {
+    let route = find_route(&map, &start, &goal);
+    for system_id in route {
         let system = map.by_system_id(system_id);
         println!("{}", system.name);
     }
