@@ -32,7 +32,6 @@ impl fmt::Display for MapDataError {
     }
 }
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Hash)]
 pub struct SystemId(usize);
 
@@ -111,9 +110,10 @@ impl Map {
             .map(|i| &self.systems[*i])
     }
 
-    pub fn by_system_id<'a>(&'a self, id: SystemId) -> Option<&'a SystemInfo> {
-        self
+    pub fn by_system_id<'a>(&'a self, id: SystemId) -> &'a SystemInfo {
+        let i = self
             .by_system_id.get(&id)
-            .map(|i| &self.systems[*i])
+            .expect("by_system_id: invalid SystemId");
+        &self.systems[*i]
     }
 }
