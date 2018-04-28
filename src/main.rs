@@ -32,10 +32,14 @@ fn shortest_route_north_south() {
 }
 
 fn main() {
+    let map = Map::fetch().expect("could not open map");
     let mut args = std::env::args();
     let start = (&mut args).skip(1).next().expect("no source");
+    if start == "--diameter" {
+        diameter(&map);
+        return;
+    }
     let goal = (&mut args).next().expect("no destination");
-    let map = Map::fetch().expect("could not open map");
     let route = find_route(&map, &start, &goal);
     for system_id in route {
         let system = map.by_system_id(system_id);

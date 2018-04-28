@@ -16,6 +16,7 @@ use std::error::Error;
 use std::collections::HashMap;
 use std::fs::File;
 use std::fmt;
+use std::slice;
 
 #[derive(Debug)]
 struct MapDataError(&'static str);
@@ -115,5 +116,9 @@ impl Map {
             .by_system_id.get(&id)
             .expect("by_system_id: invalid SystemId");
         &self.systems[*i]
+    }
+
+    pub fn systems<'a>(&'a self) -> slice::Iter<'a, SystemInfo> {
+        self.systems.iter()
     }
 }
