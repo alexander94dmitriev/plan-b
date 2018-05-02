@@ -9,32 +9,38 @@
 # http://docs.python.org/3/howto/urllib2.html
 
 from time import sleep
-import urllib.parse as parse
-import urllib.request as request
-import urllib.error as error
+import http.client as client
 import json
 from sys import stderr
 
-esi_base = "http://esi.tech.ccp.is/latest/"
+esi_endpoint = "esi.tech.ccp.is"
+esi_version = "latest"
 max_retries = 5
 retry_timeout = 5.0
 request_rate = 30.0
 
-def ccp_request(path, args=None):
-    assert args == None
-    url = esi_base + path + "/"
+connection = None
+
+def make_connection():
+    global connection
+    assert connection == None
+    connection = client.HTTPSConnection(esi_endpoint)
+
+def ccp_request(path):
+    if connection == None:
+        make_connection()
+    url = "/" + esi_version + "/" + path + "/"
     for retries in range(max_retries):
         try:
-            with request.urlopen(url) as response:
-                sleep(1.0/request_rate)
-                return json.loads(response.read())
-        except error.HTTPError as e:
+            connection.request('GET', url)
+            response = connection.getresponse()
+            sleep(1.0/request_rate)
+            result = response.read()
+            return json.loads(result)
+        except client.HTTPException as e:
             print("http error: ", e.code, file=stderr)
             if retries < max_retries - 1:
                 sleep(retry_timeout)
-        except error.URLError as e:
-            print("bad url", url + ":", e.reason, file=stderr)
-            exit(1)
     print("fetch failed for", url, file=stderr)
     exit(1)
 
