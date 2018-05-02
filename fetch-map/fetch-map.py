@@ -5,9 +5,6 @@
 
 # Fetch EVE systems and stargates using ESI
 
-# Some code based on
-# http://docs.python.org/3/howto/urllib2.html
-
 from time import sleep
 import http.client as client
 import json
@@ -27,8 +24,6 @@ def make_connection():
     connection = client.HTTPSConnection(esi_endpoint)
 
 def ccp_request(path):
-    if connection == None:
-        make_connection()
     url = "/" + esi_version + "/" + path + "/"
     for retries in range(max_retries):
         try:
@@ -43,6 +38,8 @@ def ccp_request(path):
                 sleep(retry_timeout)
     print("fetch failed for", url, file=stderr)
     exit(1)
+
+make_connection()
 
 by_system_id = dict()
 systems = ccp_request('universe/systems')
