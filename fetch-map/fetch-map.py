@@ -32,11 +32,10 @@ def ccp_request(path):
     url = "/" + esi_version + "/" + path + "/"
     for retries in range(max_retries):
         try:
+            sleep(1.0/request_rate)
             tls.connection.request('GET', url)
             response = tls.connection.getresponse()
-            sleep(1.0/request_rate)
-            result = response.read()
-            return json.loads(result)
+            return json.load(response)
         except client.HTTPException as e:
             print("http error: ", e.code, file=stderr)
             if retries < max_retries - 1:
@@ -58,12 +57,13 @@ def worker(systems):
         tls.by_system_id[system_id] = system
 
     for system_id, system in tls.by_system_id.items():
-        if 'stargates' in system:
-            stargates = system['stargates']
-            for stargate_id in stargates:
-                stargate = ccp_request('universe/stargates/' + str(stargate_id))
-                print(system['name'], "->", stargate_id)
-                by_stargate_id[stargate_id] = stargate
+        if 'stargates' not in system:
+            continue
+        stargates = system['stargates']
+        for stargate_id in stargates:
+            stargate = ccp_request('universe/stargates/' + str(stargate_id))
+            print(system['name'], "->", stargate_id)
+            by_stargate_id[stargate_id] = stargate
 
     for system_id, system in tls.by_system_id.items():
         by_system_id[system_id] = system
