@@ -9,26 +9,31 @@ from time import sleep
 import http.client as client
 import json
 from sys import stderr
+import threading
 
 esi_endpoint = "esi.tech.ccp.is"
 esi_version = "latest"
 max_retries = 5
 retry_timeout = 5.0
 request_rate = 30.0
+nthreads = 10
 
-connection = None
+# https://stackoverflow.com/a/312464
+def chunks(l, n):
+    """Yield n equal-sized chunks from l."""
+    nl = len(l)
+    nchunk = nl // n
+    for i in range(0, nl, nchunk):
+        yield l[i:i + nchunk]
 
-def make_connection():
-    global connection
-    assert connection == None
-    connection = client.HTTPSConnection(esi_endpoint)
+tls = threading.local()
 
 def ccp_request(path):
     url = "/" + esi_version + "/" + path + "/"
     for retries in range(max_retries):
         try:
-            connection.request('GET', url)
-            response = connection.getresponse()
+            tls.connection.request('GET', url)
+            response = tls.connection.getresponse()
             sleep(1.0/request_rate)
             result = response.read()
             return json.loads(result)
@@ -39,23 +44,40 @@ def ccp_request(path):
     print("fetch failed for", url, file=stderr)
     exit(1)
 
-make_connection()
-
 by_system_id = dict()
-systems = ccp_request('universe/systems')
-print(len(systems), "systems")
-for system_id in systems:
-    system = ccp_request('universe/systems/' + str(system_id))
-    print(system['name'])
-    by_system_id[system_id] = system
-
 by_stargate_id = dict()
-for system_id, system in by_system_id.items():
-    stargates = system['stargates']
-    for stargate_id in stargates:
-        stargate = ccp_request('universe/stargates/' + str(stargate_id))
-        print(system['name'], "->", stargate_id)
-        by_stargate_id[stargate_id] = stargate
+
+def worker(systems):
+    global by_system_id, by_stargate_id
+    tls.connection = client.HTTPSConnection(esi_endpoint)
+    tls.by_system_id = dict()
+
+    for system_id in systems:
+        system = ccp_request('universe/systems/' + str(system_id))
+        print(system['name'])
+        tls.by_system_id[system_id] = system
+
+    for system_id, system in tls.by_system_id.items():
+        if 'stargates' in system:
+            stargates = system['stargates']
+            for stargate_id in stargates:
+                stargate = ccp_request('universe/stargates/' + str(stargate_id))
+                print(system['name'], "->", stargate_id)
+                by_stargate_id[stargate_id] = stargate
+
+    for system_id, system in tls.by_system_id.items():
+        by_system_id[system_id] = system
+
+tls.connection = client.HTTPSConnection(esi_endpoint)
+systems = ccp_request('universe/systems')
+nsystems = len(systems)
+print(nsystems, "systems")
+threads = [threading.Thread(target=worker, args=(chunk,))
+           for chunk in chunks(systems, nthreads)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()
 
 info = {'systems': by_system_id, 'stargates': by_stargate_id}
 with open('eve-map.json', 'w') as dumpfile:
