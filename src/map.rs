@@ -74,9 +74,13 @@ impl Map {
                 .to_string();
 
             let mut stargates = Vec::new();
-            let stargate_ids = system["stargates"]
-                .as_array()
-                .ok_or_else(|| MapDataError("no system stargates"))?;
+            let stargate_ids =
+                match system.get("stargates") {
+                    None => continue,
+                    Some(array) => array
+                        .as_array()
+                        .ok_or_else(|| MapDataError("bad system stargates"))?,
+                };
             for stargate_id in stargate_ids {
                 let stargate_id_string = stargate_id.to_string();
                 let dest_id = json_stargates[&stargate_id_string]
