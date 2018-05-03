@@ -16,8 +16,8 @@ esi_version = "latest"
 max_retries = 5
 retry_timeout = 5.0
 reopen_timeout = 5.0
-request_rate = 30.0
-nthreads = 10
+request_rate = 20.0
+nthreads = 20
 
 # https://stackoverflow.com/a/312464
 def chunks(l, n):
@@ -45,10 +45,13 @@ def ccp_request(path):
                 sleep(1.0/request_rate)
             tls.connection.request('GET', url)
             response = tls.connection.getresponse()
-            try:
-                return json.load(response)
-            except json.decoder.JSONDecodeError as e:
-                print("json error: ", e, file=stderr)
+            if response.status == 200:
+                try:
+                    return json.load(response)
+                except json.decoder.JSONDecodeError as e:
+                    print("json error: ", e, file=stderr)
+            else:
+                print("bad response status: ", response.status, file=stderr)
         except client.HTTPException as e:
             print("http error: ", e.code, file=stderr)
         if retries < max_retries - 1:
